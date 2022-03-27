@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:world_time/services/world_time.dart';
 
 class ChooseLocation extends StatefulWidget {
   const ChooseLocation({Key? key}) : super(key: key);
@@ -9,6 +10,29 @@ class ChooseLocation extends StatefulWidget {
 
 class _ChooseLocationState extends State<ChooseLocation> {
 
+  List<WorldTime> locations = [
+    WorldTime(url: 'Europe/London', location: 'London', flag: 'uk.png'),
+    WorldTime(url: 'Europe/Athens', location: 'Athens', flag: 'greece.png'),
+    WorldTime(url: 'Africa/Cairo', location: 'Cairo', flag: 'egypt.png'),
+    WorldTime(url: 'Africa/Nairobi', location: 'Nairobi', flag: 'kenya.png'),
+    WorldTime(url: 'America/Chicago', location: 'Chicago', flag: 'usa.png'),
+    WorldTime(url: 'America/New_York', location: 'New York', flag: 'usa.png'),
+    WorldTime(url: 'Asia/Seoul', location: 'Seoul', flag: 'south_korea.png'),
+    WorldTime(url: 'Asia/Jakarta', location: 'Jakarta', flag: 'indonesia.png'),
+  ];
+
+  void updateTime(index) async {
+    WorldTime instance = locations[index];
+    await instance.getTime();
+    // navigate to home screen
+    Navigator.pop(context, {
+      'location': instance.location,
+      'flag': instance.flag,
+      'time': instance.time,
+      'isDaytime': instance.isDaytime,
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,7 +42,138 @@ class _ChooseLocationState extends State<ChooseLocation> {
         title: Text('Choose a Location'),
         centerTitle: true,
         elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: (){
+              showSearch(
+                context: context,
+                delegate: CustomSearchDelegate(),
+              );
+            },
+            icon: const Icon(Icons.search),
+          )
+        ]
+
+      ),
+      body: ListView.builder(
+        itemCount: locations.length,
+        itemBuilder: (context, index){
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 1.0, horizontal: 4.0),
+            child: Card(
+              child: ListTile(
+                onTap: () {
+                  updateTime(index);
+                },
+                title: Text(locations[index].location),
+                leading: CircleAvatar(
+                  backgroundImage: AssetImage('assets/${locations[index].flag}'),
+                ),
+              ),
+            ),
+          );
+        }
       ),
     );
   }
+}
+
+
+class CustomSearchDelegate extends SearchDelegate {
+  List<WorldTime> searchTerms = [
+    WorldTime(url: 'Europe/London', location: 'London', flag: 'uk.png'),
+    WorldTime(url: 'Europe/Athens', location: 'Athens', flag: 'greece.png'),
+    WorldTime(url: 'Africa/Cairo', location: 'Cairo', flag: 'egypt.png'),
+    WorldTime(url: 'Africa/Nairobi', location: 'Nairobi', flag: 'kenya.png'),
+    WorldTime(url: 'America/Chicago', location: 'Chicago', flag: 'usa.png'),
+    WorldTime(url: 'America/New_York', location: 'New York', flag: 'usa.png'),
+    WorldTime(url: 'Asia/Seoul', location: 'Seoul', flag: 'south_korea.png'),
+    WorldTime(url: 'Asia/Jakarta', location: 'Jakarta', flag: 'indonesia.png'),
+  ];
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    List<WorldTime> matchQuery = [];
+    for (WorldTime country in searchTerms) {
+      if (country.location.toLowerCase().contains(query.toLowerCase())) {
+        matchQuery.add(country);
+      }
+    }
+    return ListView.builder(
+        itemCount: matchQuery.length,
+        itemBuilder: (context, index){
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 1.0, horizontal: 4.0),
+            child: Card(
+              child: ListTile(
+                onTap: () {
+                  query = matchQuery[index].location;
+                },
+                title: Text(matchQuery[index].location),
+                leading: CircleAvatar(
+                  backgroundImage: AssetImage('assets/${matchQuery[index].flag}'),
+                ),
+              ),
+            ),
+          );
+        }
+    );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    List<WorldTime> matchQuery = [];
+    for (var country in searchTerms) {
+      if (country.location.toLowerCase().contains(query.toLowerCase())) {
+        matchQuery.add(country);
+      }
+    }
+    return ListView.builder(
+        itemCount: matchQuery.length,
+        itemBuilder: (context, index){
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 1.0, horizontal: 4.0),
+            child: Card(
+              child: ListTile(
+                onTap: () {
+                  query = matchQuery[index].location;
+                  showResults(context);
+                  // updateTime(index);
+                },
+                title: Text(matchQuery[index].location),
+                leading: CircleAvatar(
+                  backgroundImage: AssetImage('assets/${matchQuery[index].flag}'),
+                ),
+              ),
+            ),
+          );
+        }
+    );
+  }
+
+
+
+
 }

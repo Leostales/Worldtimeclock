@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:world_time/services/world_time.dart';
 
 class ChooseLocation extends StatefulWidget {
@@ -8,8 +9,23 @@ class ChooseLocation extends StatefulWidget {
   _ChooseLocationState createState() => _ChooseLocationState();
 }
 
-class _ChooseLocationState extends State<ChooseLocation> {
+class Debouncer {
+  final int milliseconds;
+  VoidCallback? action;
+  late Timer _timer;
 
+  Debouncer({required this.milliseconds});
+
+  run(VoidCallback action){
+    if (null != _timer) {
+      _timer.cancel();
+    }
+    _timer = Timer(Duration(milliseconds: milliseconds), action);
+  }
+}
+
+class _ChooseLocationState extends State<ChooseLocation> {
+  final _debouncer = Debouncer(milliseconds: 2000);
   List<WorldTime> locations = [
     WorldTime(url: 'Europe/London', location: 'London', flag: 'uk.png'),
     WorldTime(url: 'Europe/Athens', location: 'Athens', flag: 'greece.png'),
@@ -70,12 +86,15 @@ class _ChooseLocationState extends State<ChooseLocation> {
           child: TextField(
             decoration: InputDecoration(
               border: InputBorder.none,
+              contentPadding: EdgeInsets.all(10.0),
               hintText: 'Search',
             ),
             controller: _controller,
-            onChanged: (String text) {
-              updateFiltered(text);
-            },
+            onChanged: (text){
+              _debouncer.run(() {
+                updateFiltered(text);
+              });
+            }
           ),
         ) : Text("Choose a Location"),
         centerTitle: true,
